@@ -1,0 +1,365 @@
+1.	When user launches the application, a default thread is created. (Main thread)
+
+2. Main thread is used for the light weight operations. (button clicks, UI interactions, non-resource heavy tasks, etc)
+
+3. If we plan on using the same Main thread for heavy ops (like network calls, DB queries, resource heavy tasks, etc), main thread gets blocked.
+
+4. If the Main thread gets blocked, app is blocked/freezed.
+
+5. If the app is blocked (Main thread is blocked) for a longer time, app will shut down with a crash message.
+
+6. to deal with such heavy ops, instead of using a Main thread we can use a worked thread or background thread.
+
+7. Ex : BackgroundThread-1 for n/w ops
+		BackgroundThread-2 for DB ops
+		BackgroundThread-3 for downloading a file
+
+8. Thereby, having access to the Main thread.
+
+9. But, there is a limit on the number of background threads that can be created.
+
+10. Because, creating threads is expensive.
+
+11. We will be out of memory if we create more and more threads without a limit. (Eventually app crashes)
+
+12. Hence we make use of the co-routines.
+
+
+
+Co-routines
+-----------
+
+1. To create a coroutine, creating just one backgroundThread is sufficient.
+
+2. On this background thread, we can launch coroutines.
+
+3. So, with the memory consumption of just one backgroundThread, we can perform so many heavy ops.
+
+
+	BackgroundThread-1 -> coroutine-1,
+						  coroutine-2,
+						  coroutine-3
+
+
+Coroutines vs Threads
+-------------------
+
+	1. Coroutines != Threads
+	2. Coroutines are lightweight threads
+	3. Like threads, coroutines can run in parallel, wait for each-other, and communicate with each other
+	4. Coroutines are very cheap, and we can create thousands of them without the worry of the memory consumption.
+	5. Hence, Coroutines are best suited for modern applications.
+
+
+Watch Demo programs for complete understanding.
+
+
+1. GlobalScope.launch() will help using creating a background coroutine on the background thread.
+2.  thread {  // Creates a thread
+        Thread.sleep(2000)
+    }
+
+    GlobalScope.launch {  // Creates coroutine (within a thread)
+        Thread.sleep(2000)
+    }
+
+    delay(t) function:
+    -----------------
+
+        1. delay(t) is a suspending function.
+        2. Since we are creating a coroutine on the background thread and making use of Thread.sleep(2000) within it, we are blocking the entire thread on which the coroutine is running on.
+        Thereby, blocking all other coroutines running on this background thread.
+        3. Which is not good and violates the principle of coroutine.
+        4. Rather, make use of the 'delay(1000)' function, which will not block the thread on which the coroutine is operating.
+        5. delay(t) function is more efficient than Thread.sleep(t) function.
+
+        Important note:
+        --------------
+        1. Thread executing a statement before and after the delay(t) can be different. (As, delay(t) function is a suspending function)
+        2. In fact, this is true for all the suspending functions.
+
+
+
+
+Suspending functions:
+--------------------
+1. In Kotlin, suspending functions are functions that can be paused and resumed at a later point in time without blocking the thread they're running on.
+2. Functions with 'suspend' modifier are 'suspending functions'
+3. Suspending functions are only allowed to be called from other coroutines or suspending functions.
+
+
+Key Characteristics of Suspending Functions:
+-------------------------------------------
+1. Non-Blocking:
+Suspending functions do not block the thread. Instead, they suspend the execution of the coroutine until the result is available.
+
+2. Suspend and Resume:
+When a suspending function is called, the coroutine pauses (suspends) its execution, freeing the underlying thread to do other work.
+Once the suspending function completes, the coroutine resumes from where it left off.
+
+3. Coroutine Context:
+Suspending functions must be executed within a coroutine context or another suspending function, usually via a coroutine builder like launch or async.
+
+
+Ex:  suspend fun fetchData(): String {
+            delay(1000)  // Suspension point (non-blocking)
+            return "Data"
+        }
+
+    In this example, delay(1000) simulates a delay in fetching the data, but instead of blocking the thread,
+    it suspends the coroutine. After 1 second, the coroutine resumes execution and returns "Data".
+
+
+Why Use Suspending Functions?
+----------------------------
+1. They enable writing asynchronous code in a sequential style.
+2. They help avoid callback hell by using structured concurrency.
+3. They're useful for tasks that involve waiting, like I/O operations, without blocking threads.
+
+
+These are some of the most common suspending functions in Kotlin's coroutines library:
+-------------------------------------------------------------------------------------
+1. delay(): Pauses execution for a given time.
+2. withContext(): Switches to a different coroutine dispatcher.
+3. await(): Waits for the result of an async coroutine.
+4. join(): Waits for a coroutine to finish.
+5. suspendCoroutine(): Manually suspends and resumes a coroutine.
+6. supervisorScope(): Supervises multiple coroutines.
+7. produce(): Creates a coroutine that lazily produces values.
+8. withLock(): Locks a critical section of code.
+
+
+
+runBlocking:
+-----------
+1. runBlocking creates a new coroutine
+2. Blocks the current main thread.
+
+
+GlobalScope.launch() vs runBlocking():
+-------------------------------------
+
+1. Both GlobalScope.launch() and runBlocking() creates a new coroutine that runs in parallel.
+2. Despite, these both are completely different.
+3. GlobalScope.launch() creates a coroutine that does NOT block the thread on which it is operating.
+4. runBlocking() creates a coroutine that will block the thread on which it is operating.
+
+
+Coroutine builders:
+------------------
+1. Coroutine builders are used for creating coroutines.
+
+    a. launch function
+    b. async function
+    c. runBlocking function
+
+
+launch function:
+----------------
+1. Commonly used
+2. GlobalScope.launch{ }
+3. GlobalScope is a companion object
+
+
+launch function:
+----------------
+1. GlobalScope.async{ }
+2. GlobalScope is a companion object
+
+
+runBlocking function:
+--------------------
+1. Just runBlocking function
+
+
+Global scope and local scope:
+----------------------------
+    launch { }
+    ----------
+    a. Login screen
+    b. Launch a coroutine C1 using launch { }
+    c. Now navigate to Home screen
+    d. Launch a coroutine C2 using launch { }
+    e. Now if we navigate back to login screen, C2 coroutine is destroyed along with Home screen
+    f. This happens because coroutines were created in the local scope
+    g. In short, lifespan of the coroutine exist within the lifespan of its local scope.
+    h. Similarly, if we navigate back of login screen, coroutine C1 is destroyed.
+    i. Returns a Job object
+
+    GlobalScope.launch { }
+    ----------------------
+    a. Creates coroutines at the global level or app level.
+    b. These are the top level coroutines
+    c. These can survive the entire life of the app
+    d. Meaning, even if all the local scopes are destroyed, global coroutines can survive.
+
+    Note: When to create a coroutine locally vs globally is subjective.
+    ----
+
+    1. You can use GlobalScope, in cases where you don't depend on local scopes.
+
+        GlobalScope.launch { }
+        ----------------------
+
+        // Creates coroutines at the global level
+        // Highly discouraged
+        // It runs in the background and if we forget about it, it consumes a lot of resources
+        // So, should be used carefully
+
+        GlobalScope.launch {
+
+            // File downloads
+            // Play music
+
+        }
+
+         GlobalScope.launch { }
+         ----------------------
+
+        // Creates coroutines the local scope
+        // Should be our default choice
+
+        launch {
+
+            // Login ops
+            // Some data computations
+
+        }
+
+
+     2. Similar to launch, we can use GlobalScope for async as well to launch a coroutine globally.
+
+     3. launch and async are similar, but with some differences.
+
+
+
+launch { } coroutine builder:
+----------------------------
+
+val job: Job = launch {     // C1 coroutine
+    delay(1000)   // do some work
+}
+
+a. Coroutine C1 is created
+b. Coroutine C1 is suspended for 1000 ms
+c. But the thread is free for other corresponding coroutines to run
+d. Returns a Job object and we can use functions like job.join() and job.cancel() to wait for the task execution or cancel the execution.
+
+Note:
+----
+a. launch { } coroutine builder launches a coroutine without blocking the current thread.
+b. Inherits the thread and coroutine scope of the immediate parent coroutine.
+c. Returns a Job object
+d. launch is fire-and-forget because it doesn't return a value and runs the coroutine without expecting a result back.
+e. It's useful when you want to run concurrent tasks that don't need to return data, like side effects or background operations.
+f. If you need to wait for a result, you should use async instead.
+
+
+
+async { } coroutine builder:
+----------------------------
+
+val jobDeferred: Deferred<String> = launch {     // C1 coroutine
+    delay(1000)   // do some work
+    "hello"
+}
+
+
+val name: String = jobDeferred.await()
+
+a. Similar to launch { }, async { } coroutine builder launches a coroutine without blocking the current thread.
+b. Just replace 'launch' with 'async' (To create a coroutine using async { }. coroutine builder)
+c. Similar to launch { } it inherits the coroutine scope from the immediate parent coroutine (which was runBlocking in our case)
+d. Unlike, launch { }, it returns Deferred object instead of Job object. (Deferred class is a subclass of Job i/f)
+e. Using async function, we can return some data and can be retrieved using jobDeferred.await()
+
+
+runBlocking Coroutine Builder:
+-----------------------------
+
+1. In our prior exercises we have used runBlocking { } coroutine builder to run our suspending functions
+2. But in reality we use this to write unit tests to test the suspending functions
+
+    Check the code for runBlocking (junit test) for more details
+
+NOTE:
+----
+1. launch and async functions always launch a coroutine and will NOT block the thread on which the coroutine is created (NON-BLOCKING)
+2. runBlocking function always launch a coroutine and will block the thread on which the coroutine is created (BLOCKING)
+
+
+
+Coroutine Cancellation:
+----------------------
+
+Why would you cancel a coroutine?
+
+a. Coroutine result is not needed
+b. Coroutine is taking too long to respond, etc
+
+
+1. To cancel a coroutine, it should be 'cooperative'
+2. Meaning, the code inside the coroutine should be cooperative inorder to get cancelled
+3. job.cancel() and job.join() are used in conjunction
+4. If the coroutine is cooperative coroutine is cancelled or else, job.join() will wait for it to complete.
+
+
+    val job = launch {
+        // Code has to be cooperative inorder to get cancelled
+    }
+
+    job.cancel() // If the coroutine is cooperative, then cancel it
+    job.join() // Waits for the coroutine to finish
+
+    job.cancelAndJoin() = job.cancel() + job.join() // In our use case, it combines these both ops
+
+    Note that, job.join() will be in effect only when the job.cancel() is unsuccessful.
+
+
+What makes a coroutine 'cooperative'?
+------------------------------------
+
+1. There are 2 ways to make a coroutine cooperative.
+
+    First way:
+    ---------
+    a. Periodically invoke suspending function that checks for cancellation
+    b. Usage of suspending functions belonging to 'kotlinx.coroutines' package in a coroutine
+    c. Ex: delay(), yield(), withContext(), withTimeout(), etc are suspending functions that belong to 'kotlinx.coroutines' package
+
+    Second way:
+    ----------
+    a. Explicitly check for the cancellation status within the coroutine
+    b. 'CoroutineScope.isActive' boolean flag
+    c. CoroutineScope.isActive = true (Coroutine is active)
+    d. CoroutineScope.isActive = false (Coroutine is cancelled)
+    e. Threads do not have in-built mechanism to cancel itself internally
+
+
+Coroutine Cancellation Exceptions:
+---------------------------------
+1. When we cancel a coroutine by using suspending functions within it, then a 'CancellationException' is thrown by that suspending function
+2. In short all suspending functions such as
+
+        yield(), delay(), etc throw CancellationException on coroutine cancellation.
+
+3. You cannot execute a suspending function from the 'finally' block because the coroutine running the code is already cancelled
+4. If you want to execute a suspending function from a 'finally' block then wrap the code within
+
+            withContext(NonCancellable) function
+
+5. You can print your own cancellation message using
+
+             job.cancel(CancellationException("My crash message"))
+
+
+Summary of CoroutineContext Elements:
+------------------------------------
+
+Dispatchers: Control the thread or thread pool (e.g., Dispatchers.Default, Dispatchers.IO, Dispatchers.Main).
+
+Job: Manages coroutine lifecycle (e.g., active, completed, canceled).
+
+withContext: Switches the context of the current coroutine temporarily without creating a new coroutine.
+
+
