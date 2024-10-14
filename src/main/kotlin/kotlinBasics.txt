@@ -1,0 +1,123 @@
+1. Nullable Types
+
+	In Kotlin, you declare a variable as nullable by appending a question mark (?) to its type.
+
+	For example:
+
+		var name: String? = null // This variable can hold a String or null
+
+
+2. Safe Calls
+
+	Kotlin provides safe call operators (?.) to safely access properties or methods of a nullable type. If the variable is null, it returns null instead of throwing an exception.
+
+
+		val length: Int? = name?.length // If name is null, length will be null
+
+
+3. Elvis Operator
+
+	The Elvis operator (?:) allows you to provide a default value if the expression on the left is null.
+
+
+		val length: Int = name?.length ?: 0 // If name is null, length will be 0
+
+
+4. Non-null Assertion
+
+	If you are sure that a variable is not null, you can use the non-null assertion operator (!!). However, this can throw a NullPointerException if the variable is indeed null.
+
+
+		val length: Int = name!!.length // Throws NullPointerException if name is null
+
+
+5. Any and Any?
+
+
+	In Kotlin, Any is the root type of all non-nullable types, similar to Object in Java.
+
+	It represents the most generic type in Kotlin, meaning any object can be treated as Any.
+
+	However, Any cannot hold a null value by default.
+
+	If you want a variable to hold any type and allow null values, you use Any?
+
+	Any? is the nullable version of Any (It means a variable can hold any type of object or a null value.)
+
+	It's used when you want to store an object that can be of any type but might also be null.
+
+	Here’s a simple example of Any?:
+
+
+
+				fun printObjectType(obj: Any?) {
+				    if (obj == null) {
+				        println("Object is null")
+				    } else {
+				        println("Object type is: ${obj::class.simpleName}")
+				    }
+				}
+
+				fun main() {
+				    val str: Any? = "Kotlin"
+				    val num: Any? = 123
+				    val nullValue: Any? = null
+
+				    printObjectType(str)      // Output: Object type is: String
+				    printObjectType(num)      // Output: Object type is: Int
+				    printObjectType(nullValue) // Output: Object is null
+				}
+
+
+
+6. Safe Casting
+
+	You can use the as? operator to safely cast a variable to a type.
+
+	Will return null if the cast is not possible.
+
+
+				val number: Any? = "Not a number"
+
+				val intNumber: Int? = number as? Int // intNumber will be null since the cast fails
+
+
+
+7. 	Checking for Null Values
+
+	You can check for null using simple if statements:
+
+
+				if (name != null) {
+				    println("Name length: ${name.length}")
+				} else {
+				    println("Name is null")
+				}
+
+
+
+8. Here's a complete function demonstrating these null checks:
+
+
+
+				fun printNameLength(name: String?) {
+				    // Using safe call and Elvis operator
+				    val length: Int = name?.length ?: 0
+				    println("Name length: $length")
+
+				    // Using non-null assertion (risky)
+				    try {
+				        println("Name length with non-null assertion: ${name!!.length}")
+				    } catch (e: NullPointerException) {
+				        println("Caught NullPointerException: name was null")
+				    }
+
+				    // Safe casting example
+				    val number: Any? = "Hello"
+				    val intNumber: Int? = number as? Int
+				    println("Casted number: $intNumber") // Will print "Casted number: null"
+				}
+
+				// Testing the function
+				printNameLength("Kotlin") // Outputs: Name length: 6
+				printNameLength(null)      // Outputs: Name length: 0
