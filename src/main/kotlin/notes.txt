@@ -363,3 +363,15 @@ Job: Manages coroutine lifecycle (e.g., active, completed, canceled).
 withContext: Switches the context of the current coroutine temporarily without creating a new coroutine.
 
 
+Timeouts:
+--------
+
+1. When a created coroutine takes more time than expected to complete its task, then we can cancel our coroutine.
+   We can use time bounded functions such as :
+
+    a. withTimeout
+    b. withTimeoutOrNull
+
+2. Both 'withTimeout' and 'withTimeoutOrNull' functions are coroutine builders similar to 'launch' and 'async'
+
+
